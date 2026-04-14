@@ -98,13 +98,6 @@ df_cleaned['tv^2'] = df_cleaned['tv']**2
 df_cleaned['radio^2'] = df_cleaned['radio']**2
 df_cleaned['newspaper^2'] = df_cleaned['newspaper']**2
 
-# Define the features (X) and the target variable (y) using the cleaned data with engineered features
-X = df_cleaned.drop(columns=['unnamed:_0', 'sales'])
-y = df_cleaned['sales']
-
-# Split the data into training and testing sets (80:20 ratio)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
 # Feature Scaling (from previous steps)
 # Identify numerical columns for scaling, excluding identifiers and the target variable
 numerical_cols_to_scale = ['tv', 'radio', 'newspaper', 'total_advertising_spend',
@@ -114,9 +107,16 @@ numerical_cols_to_scale = ['tv', 'radio', 'newspaper', 'total_advertising_spend'
 # Instantiate the StandardScaler
 scaler = StandardScaler()
 
-# Fit scaler on training data only, then transform both train and test sets
-X_train[numerical_cols_to_scale] = scaler.fit_transform(X_train[numerical_cols_to_scale])
-X_test[numerical_cols_to_scale] = scaler.transform(X_test[numerical_cols_to_scale])
+# Fit and transform the data before splitting
+df_cleaned[numerical_cols_to_scale] = scaler.fit_transform(df_cleaned[numerical_cols_to_scale])
+
+
+# Define the features (X) and the target variable (y) using the cleaned data with engineered features
+X = df_cleaned.drop(columns=['unnamed:_0', 'sales'])
+y = df_cleaned['sales']
+
+# Split the data into training and testing sets (80:20 ratio)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 # Instantiate the Gradient Boosting Regressor model
 final_gbr_model = GradientBoostingRegressor(random_state=42)
@@ -132,13 +132,10 @@ r2_test = r2_score(y_test, y_pred_test)
 print(f"\nR2 score on the test data: {r2_test:.4f}")
 
 
-# Save the trained model and scaler to pkl files
+# Save the trained model to a pkl file
 model_dir = os.path.join(project_root, 'model')
 os.makedirs(model_dir, exist_ok=True)  # Create model directory if it doesn't exist
 model_path = os.path.join(model_dir, 'gradient_boosting_regressor_model.pkl')
-scaler_path = os.path.join(model_dir, 'scaler.pkl')
 
 pickle.dump(final_gbr_model, open(model_path, 'wb'))
-pickle.dump(scaler, open(scaler_path, 'wb'))
 print(f"Trained Gradient Boosting Regressor model saved to {model_path}")
-print(f"Scaler saved to {scaler_path}")
